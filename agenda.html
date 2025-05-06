@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda do Tatuador</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center p-6">
+
+  <div class="bg-gray-800 p-6 rounded-2xl shadow-2xl w-full max-w-4xl">
+    <h1 class="text-4xl font-extrabold mb-4 text-center text-red-400">?? Agenda do Tatuador - <span id="mesAtual"></span></h1>
+
+    <input type="text" id="filtroCliente" placeholder="Buscar cliente..." class="p-2 rounded bg-gray-700 mb-4 w-full text-white">
+
+    <form id="formAgenda" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <input type="hidden" id="editIndex">
+      <input type="text" id="cliente" placeholder="Nome do Cliente" required class="p-2 rounded bg-gray-700 text-white">
+      <input type="text" id="tatuagem" placeholder="Tatuagem" required class="p-2 rounded bg-gray-700 text-white">
+      <input type="number" id="valor" placeholder="Valor (R$)" required class="p-2 rounded bg-gray-700 text-white">
+      <input type="datetime-local" id="dataHora" required class="p-2 rounded bg-gray-700 text-white">
+      <button type="submit" class="bg-green-500 hover:bg-green-600 p-2 rounded font-semibold transition col-span-2 flex items-center justify-center gap-2">
+        <span>?</span> <span>Salvar Agendamento</span>
+      </button>
+    </form>
+
+    <h2 class="text-2xl font-semibold mb-2">Tatuagens Agendadas</h2>
+    <ul id="listaAgendamentos" class="space-y-2 mb-6"></ul>
+
+    <h2 class="text-2xl font-semibold mb-2">Calendário do Mês</h2>
+    <div id="calendario" class="grid grid-cols-7 gap-2 text-center"></div>
+    <p id="totalMes" class="mt-4 text-lg font-semibold text-green-400">Total do mês: R$ 0,00</p>
+  </div>
+
+  <div class="mt-10 w-full max-w-4xl text-center">
+    <h2 class="text-2xl font-semibold mb-4">Siga meu trabalho no Instagram</h2>
+    <div class="flex justify-center">
+      <iframe 
+        src="https://www.instagram.com/maurojr_tattoo/embed" 
+        width="400" 
+        height="480" 
+        frameborder="0" 
+        scrolling="no" 
+        allowtransparency="true"
+        class="rounded-xl shadow-xl"
+        style="border:none; overflow:hidden">
+      </iframe>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('formAgenda');
+    const lista = document.getElementById('listaAgendamentos');
+    const mesAtualEl = document.getElementById('mesAtual');
+    const filtroCliente = document.getElementById('filtroCliente');
+    const calendario = document.getElementById('calendario');
+    const totalMesEl = document.getElementById('totalMes');
+
+    let agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
+    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const hoje = new Date();
+    const anoAtual = hoje.getFullYear();
+    const mesAtual = hoje.getMonth();
+    mesAtualEl.textContent = `${meses[mesAtual]} ${anoAtual}`;
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const cliente = document.getElementById('cliente').value.trim();
+      const tatuagem = document.getElementById('tatuagem').value.trim();
+      const valor = parseFloat(document.getElementById('valor').value);
+      const dataHora = document.getElementById('dataHora').value;
+      const editIndex = document.getElementById('editIndex').value;
+
+      if (cliente && tatuagem && valor && dataHora) {
+        const novoAgendamento = {
+          cliente,
+          tatuagem,
+          valor: valor.toFixed(2),
+          dataHora: new Date(dataHora)
+        };
+
+        if (editIndex !== '') {
+          agendamentos[editIndex] = novoAgendamento;
+          document.getElementById('editIndex').value = '';
+        } else {
+          agendamentos.push(novoAgendamento);
+        }
+
+        agendamentos.sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
+        salvarEAtualizar();
+        form.reset();
+      }
+    });
+
+    filtroCliente.addEventListener('input', renderizarAgendamentos);
+
+    function renderizarAgendamentos() {
+      lista.innerHTML = '';
+      const filtro = filtroCliente.value.toLowerCase();
+      agendamentos
+        .filter(a => a.cliente.toLowerCase().includes(filtro))
+        .forEach((agendamento, index) => {
+          const li = document.createElement('li');
+          li.className = 'bg-gray-700 p-3 rounded flex justify-between items-center';
+          li.innerHTML = `
+            <div>
+              <p class="font-semibold text-lg">${agendamento.cliente}</p>
+              <p>${agendamento.tatuagem} - R$ ${agendamento.valor}</p>
+              <p class="text-sm text-gray-300">${new Date(agendamento.dataHora).toLocaleString('pt-BR')}</p>
+            </div>
+            <div class="space-x-2 flex">
+              <button onclick="editarAgendamento(${index})" class="text-yellow-400 hover:text-yellow-600 transition" title="Editar"><span>??</span></button>
+              <button onclick="removerAgendamento(${index})" class="text-red-400 hover:text-red-600 transition" title="Remover"><span>???</span></button>
+            </div>
+          `;
+          lista.appendChild(li);
+        });
+
+      renderizarCalendario();
+    }
+
+    function removerAgendamento(index) {
+      if (confirm('Tem certeza que deseja remover este agendamento?')) {
+        agendamentos.splice(index, 1);
+        salvarEAtualizar();
+      }
+    }
+
+    function editarAgendamento(index) {
+      const ag = agendamentos[index];
+      document.getElementById('cliente').value = ag.cliente;
+      document.getElementById('tatuagem').value = ag.tatuagem;
+      document.getElementById('valor').value = ag.valor;
+      document.getElementById('dataHora').value = new Date(ag.dataHora).toISOString().slice(0,16);
+      document.getElementById('editIndex').value = index;
+    }
+
+    function salvarEAtualizar() {
+      localStorage.setItem('agendamentos', JSON.stringify(agendamentos));
+      renderizarAgendamentos();
+    }
+
+    function renderizarCalendario() {
+      calendario.innerHTML = '';
+      const primeiroDia = new Date(anoAtual, mesAtual, 1);
+      const ultimoDia = new Date(anoAtual, mesAtual + 1, 0);
+      const diasNoMes = ultimoDia.getDate();
+      const diaSemanaInicio = primeiroDia.getDay();
+      const diasComTatuagem = agendamentos
+        .filter(a => new Date(a.dataHora).getMonth() === mesAtual && new Date(a.dataHora).getFullYear() === anoAtual)
+        .map(a => new Date(a.dataHora).getDate());
+
+      for (let i = 0; i < diaSemanaInicio; i++) {
+        calendario.innerHTML += `<div></div>`;
+      }
+
+      for (let dia = 1; dia <= diasNoMes; dia++) {
+        const marcado = diasComTatuagem.includes(dia);
+        calendario.innerHTML += `<div class="p-2 rounded shadow ${marcado ? 'bg-red-500' : 'bg-gray-600'}">${dia}</div>`;
+      }
+
+      const totalMes = agendamentos
+        .filter(a => new Date(a.dataHora).getMonth() === mesAtual && new Date(a.dataHora).getFullYear() === anoAtual)
+        .reduce((acc, a) => acc + parseFloat(a.valor), 0);
+
+      totalMesEl.textContent = `Total do mês: R$ ${totalMes.toFixed(2)}`;
+    }
+
+    renderizarAgendamentos();
+  </script>
+</body>
+</html>
