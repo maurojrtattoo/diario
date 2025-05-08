@@ -27,9 +27,9 @@
     <h2 class="text-2xl font-semibold mb-2">Tatuagens Agendadas</h2>
     <ul id="listaAgendamentos" class="space-y-2 mb-6"></ul>
 
-    <h2 class="text-2xl font-semibold mb-2">Calendário do Mês</h2>
+    <h2 class="text-2xl font-semibold mb-2">CalendÃ¡rio do MÃªs</h2>
     <div id="calendario" class="grid grid-cols-7 gap-2 text-center"></div>
-    <p id="totalMes" class="mt-4 text-lg font-semibold text-green-400">Total do mês: R$ 0,00</p>
+    <p id="totalMes" class="mt-4 text-lg font-semibold text-green-400">Total do mÃªs: R$ 0,00</p>
   </div>
 
   <div class="mt-10 w-full max-w-4xl text-center">
@@ -57,7 +57,7 @@
     const totalMesEl = document.getElementById('totalMes');
 
     let agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
-    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const meses = ['Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
     const mesAtual = hoje.getMonth();
@@ -164,7 +164,7 @@
         .filter(a => new Date(a.dataHora).getMonth() === mesAtual && new Date(a.dataHora).getFullYear() === anoAtual)
         .reduce((acc, a) => acc + parseFloat(a.valor), 0);
 
-      totalMesEl.textContent = `Total do mês: R$ ${totalMes.toFixed(2)}`;
+      totalMesEl.textContent = `Total do mÃªs: R$ ${totalMes.toFixed(2)}`;
     }
 
     renderizarAgendamentos();
